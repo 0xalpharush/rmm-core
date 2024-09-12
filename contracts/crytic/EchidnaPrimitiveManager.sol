@@ -42,9 +42,6 @@ interface IManagerBase {
 
     /// @notice Returns the address of WETH9
     function WETH9() external view returns (address);
-
-    /// @notice Returns the address of the PositionDescriptor
-    function positionDescriptor() external view returns (address);
 }
 abstract contract ManagerBase is IManagerBase, Reentrancy {
     /// @notice Data struct reused by callbacks
@@ -60,23 +57,17 @@ abstract contract ManagerBase is IManagerBase, Reentrancy {
     /// @inheritdoc IManagerBase
     address public immutable override WETH9;
 
-    /// @inheritdoc IManagerBase
-    address public immutable override positionDescriptor;
-
     /// @param factory_  Address of a PrimitiveFactory
     /// @param WETH9_    Address of WETH9
-    /// @param positionDescriptor_    Address of the position renderer
     constructor(
         address factory_,
-        address WETH9_,
-        address positionDescriptor_
+        address WETH9_
     ) {
-        if (factory_ == address(0) || WETH9_ == address(0) || positionDescriptor_ == address(0))
+        if (factory_ == address(0) || WETH9_ == address(0))
             revert WrongConstructorParametersError();
 
         factory = factory_;
         WETH9 = WETH9_;
-        positionDescriptor = positionDescriptor_;
     }
 }
 interface ICashManager {
@@ -1853,18 +1844,6 @@ contract ERC1155Permit is ERC1155, IERC1155Permit, EIP712 {
         return _domainSeparatorV4();
     }
 }
-interface IPositionDescriptor {
-    /// VIEW FUNCTIONS ///
-
-    /// @notice  Returns the address of the PositionRenderer contract
-    function positionRenderer() external view returns (address);
-
-    /// @notice         Returns the metadata of a position token
-    /// @param engine   Address of the PrimitiveEngine contract
-    /// @param tokenId  Id of the position token (pool id)
-    /// @return         Metadata as a base64 encoded JSON string
-    function getMetadata(address engine, uint256 tokenId) external view returns (string memory);
-}
 abstract contract PositionManager is ManagerBase, ERC1155Permit {
     /// @dev  Ties together pool ids with engine addresses, this is necessary because
     ///       there is no way to get the Primitive Engine address from a pool id
@@ -1873,12 +1852,6 @@ abstract contract PositionManager is ManagerBase, ERC1155Permit {
     /// @dev  Empty variable to pass to the _mint function
     bytes private _empty;
 
-    /// @notice         Returns the metadata of a token
-    /// @param tokenId  Token id to look for (same as pool id)
-    /// @return         Metadata of the token as a string
-    function uri(uint256 tokenId) public view override returns (string memory) {
-        return IPositionDescriptor(positionDescriptor).getMetadata(cache[tokenId], tokenId);
-    }
 
     /// @notice         Allocates {amount} of {poolId} liquidity to {account} balance
     /// @param account  Recipient of the liquidity
@@ -2263,12 +2236,10 @@ contract EchidnaPrimitiveManager is IPrimitiveManager, Multicall, CashManager, S
     address engine;
     /// @param engine_             Address of a PrimitiveFactory
     /// @param WETH9_               Address of WETH9
-    /// @param positionDescriptor_  Address of PositionDescriptor
     constructor(
         address engine_,
-        address WETH9_,
-        address positionDescriptor_
-    ) ManagerBase(engine_, WETH9_, positionDescriptor_) {engine = engine_;}
+        address WETH9_
+    ) ManagerBase(engine_, WETH9_) {engine = engine_;}
 
     /// @inheritdoc IPrimitiveManager
     function create(

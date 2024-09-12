@@ -1,14 +1,19 @@
 import { ethers } from 'hardhat'
-import expect from './expect'
-import { PoolState, TestPools } from './poolConfigs'
+import expect from '../shared/expect'
+import { PoolState, TestPools } from '../shared/poolConfigs'
 import { Wallet } from 'ethers'
 //import MockEngineArtifact from '../../artifacts/contracts/test/engine/MockEngine.sol/MockEngine.json'
+
+
+// First, start anvil: anvil --dump-state dump-state.json
+// Then, run the following command:
+// npx hardhat test test/unit/unit_test_seed.test.ts --network localhost
 
 //TestPools.forEach(function (pool: PoolState) {
   describe(`constructor of pool`, function () {
     let signer, other;
     let risky_18, stable_18, risky_6, stable_6, factoryDeploy, factory;
-    let positionRenderer, positionDescriptor, weth9;
+    let weth9;
     let engine_18_18, engine_18_6, engine_6_18, engine_6_6
     let manager_18_18, manager_18_6, manager_6_18, manager_6_6
 
@@ -17,13 +22,11 @@ import { Wallet } from 'ethers'
     })
 
     beforeEach(async function () {
-      const MockEngine = await ethers.getContractFactory("MockEngine")
+      const MockEngine = await ethers.getContractFactory("EchidnaMockEngine")
       const tokenFactory = await ethers.getContractFactory('TestToken')
       //const factoryDeployFactory = await ethers.getContractFactory('FactoryDeploy')
-      const PrimitiveManager = await ethers.getContractFactory("PrimitiveManager");
+      const PrimitiveManager = await ethers.getContractFactory("EchidnaPrimitiveManager");
       const WETH9 = await ethers.getContractFactory("WETH9");
-      const PositionRenderer = await ethers.getContractFactory("PositionRenderer");
-      const PositionDescriptor = await ethers.getContractFactory("PositionDescriptor");
       //const factoryDeploy = (await factoryDeployFactory.deploy())
       //let tx = await factoryDeploy.initialize(factory.address)
       //await tx.wait()
@@ -39,13 +42,11 @@ import { Wallet } from 'ethers'
       engine_6_6 = await MockEngine.deploy(risky_6.address, stable_6.address, 10^12, 10^12, 10^1);
 
       // Deploy PrimitiveManager + dependencies
-      positionRenderer = await PositionRenderer.deploy()
-      positionDescriptor = await PositionDescriptor.deploy(positionRenderer.address)
       weth9 = await WETH9.deploy()
-      manager_18_18 = await PrimitiveManager.deploy(engine_18_18.address, weth9.address, positionDescriptor.address)
-      manager_18_6 = await PrimitiveManager.deploy(engine_18_6.address, weth9.address, positionDescriptor.address)
-      manager_6_18 = await PrimitiveManager.deploy(engine_6_18.address, weth9.address, positionDescriptor.address)
-      manager_6_6 = await PrimitiveManager.deploy(engine_6_6.address, weth9.address, positionDescriptor.address)
+      manager_18_18 = await PrimitiveManager.deploy(engine_18_18.address, weth9.address)
+      manager_18_6 = await PrimitiveManager.deploy(engine_18_6.address, weth9.address)
+      manager_6_18 = await PrimitiveManager.deploy(engine_6_18.address, weth9.address)
+      manager_6_6 = await PrimitiveManager.deploy(engine_6_6.address, weth9.address)
       
 
       console.log(`mockRisky18 ${risky_18.address} mockStable18 ${stable_18.address}`)

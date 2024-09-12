@@ -244,7 +244,6 @@ contract E2E_Manager is E2E_Helper {
 
     function check_manager() public {
         assert(manager.WETH9() == weth9);
-        assert(manager.positionDescriptor() != address(0));
     }
 
     event DepositManager(uint128 riskyBefore, uint128 stableBefore, uint128 riskyAfter, uint128 stableAfter);
